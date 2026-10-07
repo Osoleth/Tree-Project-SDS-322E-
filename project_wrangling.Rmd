@@ -1,0 +1,267 @@
+---
+title: "project_wrangling_pdf"
+output: pdf_document
+date: "2026-10-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, escape = FALSE)
+```
+
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+## **Dataset:**
+
+**Remind us which dataset(s) you are exploring.**
+
+We will explore the Community Tree Priority Map. According to their webpage, the map enables Austin organizations and individuals to decide where activities like planting, tree care, and community outreach could occur around Austin.
+
+**Download the dataset from the City of Austin Data Portal as a *.csv* file and import it into R.**
+
+```{r}
+url = "https://data.austintexas.gov/api/v3/views/ugty-5b95/query.csv"
+
+# if my_trees csv does not exist, download it from url
+if(!file.exists("my_trees.csv")){
+  download.file(url, "my_trees.csv")
+}
+
+# if my_trees obj doesn't exist, import it using read
+if (!exists(x = "my_trees")){
+  my_trees = read.csv("my_trees.csv")
+}
+
+# removing first 4 col that came from the API
+colnames(my_trees)
+my_trees |>
+  select(-c(X.id, X.version, X.created_at, X.updated_at))
+```
+
+**Report the number of rows and columns in the dataset.**
+
+```{r}
+# reports as rows then columns
+dim(my_trees)
+
+```
+
+**Show the first few rows and the main variables of interest.**
+
+```{r}
+# The core vars of interest are: zip codes, service area, along with each of the 4 individual scores: environment, social, investment and health.
+colnames(my_trees)
+
+# other variables that may be interesting are the_geometry & priority_score
+my_trees_vars = my_trees |>
+  select(
+    # region related
+    zipcodes,
+    ae_service_area,
+    # the four individual scores
+    environment_score,
+    social_score,
+    investment_score,
+    health_score,
+  )
+
+# first 5 rows of my_trees_vars
+head(my_trees_vars, n = 5)
+
+
+```
+
+**If you are using more than one dataset, explain how you would join the datasets.**
+
+At this time we are not planning on using more than this one dataset.
+
+## **Research Question:**
+
+**Remind us of your research question**
+
+How do environmental, social, investment and health scores vary across ZIP codes or within/outside service areas and which urban factors most strongly correlate with a high tree priority score?
+
+## **Variables**
+
+#### Variable `zipcodes`
+
+**What it represents**
+
+`zipcodes` represents the postal codes that the the geometry of the tract is in. One tract may partially overlap with multiple postal codes.
+
+**How we will treat it**
+
+We will treat `zipcodes` as a nominal categorical variable
+
+**Visualizations**
+
+```{r}
+# ggplot of single categorical
+```
+
+**Summary Statistics**
+
+```{r}
+# summary statistics for categorical
+```
+
+------------------------------------------------------------------------
+
+#### Variable `ae_service_area`
+
+**What it represents**
+
+`ae_service_area` represents whether the census tract is completely within, intersects, or is outside of the Austin Energy service area. The Austin Energy service area can be used as an approximate border of the City of Austin.
+
+**How we will treat it**
+
+We will treat `ae_service_area` as a nominal categorical variable.
+
+**Visualizations**
+
+```{r}
+# ggplot of single categorical
+```
+
+**Summary Statistics**
+
+```{r}
+# summary statistics for categorical
+```
+
+------------------------------------------------------------------------
+
+#### Variable `environment_score`
+
+**What it represents**
+
+`environment_score` represents the cumulative score for the "Natural Environment" category. It is calculated by normalizing three factors: tree canopy coverage, flood plain coverage, and mean maximum land surface temperature.
+
+**How we will treat it**
+
+We will treat `environment_score` as a continuous numeric variable.
+
+**Visualizations**
+
+```{r}
+# ggplot of single continuous numeric variable
+```
+
+**Summary Statistics**
+
+```{r}
+# summary statistics for a continuous numeric variable
+```
+
+------------------------------------------------------------------------
+
+#### Variable `social_score`
+
+**What it represents**
+
+`social_score` represents the cumulative score for the "Social Vulnerability" category. It is taken from the social vulnerability index which is from the UT Austin "Austin Area Sustainability Indicators".
+
+**How we will treat it**
+
+We will treat `social_score` as a continuous numeric variable
+
+**Visualizations**
+
+```{r}
+# ggplot of single continuous numeric
+```
+
+**Summary Statistics**
+
+```{r}
+# summary statistics for continuous numeric
+```
+
+------------------------------------------------------------------------
+
+#### Variable `investment_score`
+
+**What it represents**
+
+`investment_score` represents the cumulative score for the "Community Investment" category. It is calculated by normalizing two factors: urban forest funding by neighborhood and tree plantings from NeighborWoods, ReadySetPlant and Austin community tree programs per square mile.
+
+**How we will treat it**
+
+We will treat `investment_score` as a continuous numeric variable
+
+**Visualizations**
+
+```{r}
+# ggplot of single continuous numeric
+```
+
+**Summary Statistics**
+
+```{r}
+# summary statistics for continuous numeric
+```
+
+------------------------------------------------------------------------
+
+#### Variable `health_score`
+
+**What it represents**
+
+`health_score` represents the cumulative score for the "Health and Well-Being" category. It is calculated by normalizing three factors: self-reported physical and mental health data from the CDC and projected roadway emissions for 2035 as a stand-in for air quality.
+
+**How we will treat it**
+
+We will treat `health_score` as a continuous numeric variable
+
+**Visualizations**
+
+```{r}
+# ggplot of single continuous numeric
+```
+
+**Summary Statistics**
+
+```{r}
+# summary statistics for continuous numeric
+```
+
+------------------------------------------------------------------------
+
+## Faceted Comparison Plots
+
+```{r}
+# I just think it would be useful to see them faceted or overlayed here
+# distributions and summaries of the 4 scores in one place
+```
+
+**Wrangling:** Based on what you discovered about your variables, prepare your dataset for analysis by performing any data wrangling that is appropriate for your project. This might include:
+
+- selecting or renaming the variables you need
+
+- creating new variables
+
+- filtering observations
+
+- recoding or combining categories
+
+- converting variable types
+
+- joining datasets
+
+Then briefly summarize:
+
+- What changes did you make to the original data?
+
+- Which variables will you use in your analysis?
+
+- Is there anything else you think may need to be addressed before beginning your exploratory data analysis?
+
+## Our Notes
+
+<https://www.treeequityscore.org/analyzer/austin/map> - The new tree equity system, interactive. Can be used to show how the two systems score the same areas. Interesting!
+
+<https://auf.isa-arbor.com/content/early/2025/07/16/jauf.2025.020> - Table 5 in this article shows how the individual scores (health, investment, etc.) are calculated and their data sources. This table was the source for how individual scores were calculated.
+
+We may want to use `the_geometry` since it contains coordinates that can be used alongside a single line transecting Austin. We can then define East/West divides or North/South divides, etc just by applying a rule there. If so, we may want to reformat it into separate columns for ease of use.
