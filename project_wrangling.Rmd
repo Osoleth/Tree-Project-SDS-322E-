@@ -1,19 +1,31 @@
 ---
-title: "project_wrangling_pdf"
-output: pdf_document
+title: "project_wrangling"
+output:
+  html_document:
+    df_print: paged
 date: "2026-10-07"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, escape = FALSE)
+knitr::opts_chunk$set(echo = TRUE, escape = FALSE, warning = FALSE, message = FALSE, fig.width = 5, fig.height = 3)
 ```
 
 ```{r}
-library(tidyverse)
-# install tidyverse if not installed
-if ( !("tidyverse" %in% installed.packages()) ){
-    install.packages("tidyverse")
+
+# install tidyverse and simple features if not installed
+# Note: sf requires RTools
+
+packages = c("tidyverse", "sf")
+
+for (package in packages){
+  if ( !(package %in% installed.packages()) ){
+    install.packages(package)
     }
+}
+
+library(tidyverse)
+library(sf)
+
 ```
 
 ## **Dataset:**
@@ -39,7 +51,7 @@ if (!exists(x = "my_trees")){
 
 # removing first 4 col that came from the API
 colnames(my_trees)
-my_trees |>
+my_trees_vars = my_trees |>
   select(-c(X.id, X.version, X.created_at, X.updated_at))
 ```
 
@@ -72,8 +84,6 @@ my_trees_vars = my_trees |>
 
 # first 5 rows of my_trees_vars
 head(my_trees_vars, n = 5)
-
-
 ```
 
 **If you are using more than one dataset, explain how you would join the datasets.**
@@ -102,12 +112,25 @@ We will treat `zipcodes` as a nominal categorical variable
 
 ```{r}
 # ggplot of single categorical
+my_trees_vars |>
+  count(zipcodes) |>
+  arrange(desc(n)) |>
+  slice_head(n = 15) |>
+  ggplot(aes(x = n, y = reorder(zipcodes, n))) +
+  geom_col(fill = "lightblue") +
+  labs(x = "Count", y = "Zipcodes") +
+  theme_minimal()
 ```
 
 **Summary Statistics**
 
 ```{r}
 # summary statistics for categorical
+my_trees_vars |>
+  separate_rows(zipcodes, sep = ",") |>
+  count(zipcodes, name = "frequency") |>
+  mutate(proportion = frequency / sum(frequency))
+
 ```
 
 ------------------------------------------------------------------------
@@ -126,12 +149,24 @@ We will treat `ae_service_area` as a nominal categorical variable.
 
 ```{r}
 # ggplot of single categorical
+my_trees_vars |>
+  count(ae_service_area) |>
+  arrange(desc(n)) |>
+  ggplot(aes(x = n, y = ae_service_area)) +
+  geom_col(fill = "lightblue") +
+  labs(
+    x = "Count", y = "Service Area Proximity"
+  ) +
+  theme_minimal()
 ```
 
 **Summary Statistics**
 
 ```{r}
 # summary statistics for categorical
+my_trees_vars |>
+  count(ae_service_area, name = "frequency") |>
+  mutate(proportion = frequency/sum(frequency))
 ```
 
 ------------------------------------------------------------------------
@@ -150,12 +185,18 @@ We will treat `environment_score` as a continuous numeric variable.
 
 ```{r}
 # ggplot of single continuous numeric variable
+ggplot(data = my_trees_vars) +
+  aes(x = environment_score) +
+  geom_histogram(fill = "lightgreen", binwidth = 4) +
+  theme_minimal() +
+  labs(x = "Environment Score", y = "Frequency")
 ```
 
 **Summary Statistics**
 
 ```{r}
 # summary statistics for a continuous numeric variable
+summary(my_trees_vars$environment_score)
 ```
 
 ------------------------------------------------------------------------
@@ -174,12 +215,18 @@ We will treat `social_score` as a continuous numeric variable
 
 ```{r}
 # ggplot of single continuous numeric
+ggplot(data = my_trees_vars) +
+  aes(x = social_score) +
+  geom_histogram(fill = "darkgoldenrod1", binwidth = 5) +
+  theme_minimal() +
+  labs(x = "Social Score", y = "Frequency")
 ```
 
 **Summary Statistics**
 
 ```{r}
 # summary statistics for continuous numeric
+summary(my_trees_vars$social_score)
 ```
 
 ------------------------------------------------------------------------
@@ -198,12 +245,18 @@ We will treat `investment_score` as a continuous numeric variable
 
 ```{r}
 # ggplot of single continuous numeric
+ggplot(data = my_trees_vars) +
+  aes(x = investment_score) +
+  geom_histogram(fill = "paleturquoise", binwidth = 5) +
+  theme_minimal() +
+  labs(x = "Investment Score", y = "Frequency")
 ```
 
 **Summary Statistics**
 
 ```{r}
 # summary statistics for continuous numeric
+summary(my_trees_vars$investment_score)
 ```
 
 ------------------------------------------------------------------------
@@ -222,12 +275,18 @@ We will treat `health_score` as a continuous numeric variable
 
 ```{r}
 # ggplot of single continuous numeric
+ggplot(data = my_trees_vars) +
+  aes(x = health_score) +
+  geom_histogram(fill = "firebrick1", binwidth = 5) +
+  theme_minimal() +
+  labs(x = "Health Score", y = "Frequency")
 ```
 
 **Summary Statistics**
 
 ```{r}
 # summary statistics for continuous numeric
+summary(my_trees_vars$health_score)
 ```
 
 ------------------------------------------------------------------------
@@ -278,27 +337,72 @@ Social score has a very high variance. With such a high variance, social score w
 
 ## **Wrangling:**
 
-Based on what you discovered about your variables, prepare your dataset for analysis by performing any data wrangling that is appropriate for your project. This might include:
+#### **Individual Changes**
 
-- selecting or renaming the variables you need
+First, we removed the columns that came from the API such as X.id, X.version, etc.
 
-- creating new variables
+```{r}
+# removing rows that came from the API
+my_trees = my_trees |>
+  select(-c(X.id, X.version, X.created_at, X.updated_at))
 
-- filtering observations
+```
 
-- recoding or combining categories
+We further narrowed the dataset to our variables of interest (these may change)
 
-- converting variable types
+```{r}
+my_trees_vars = my_trees |>
+  select(
+    # region related
+    zipcodes,
+    ae_service_area,
+    # the four individual scores
+    environment_score,
+    social_score,
+    investment_score,
+    health_score,
+  )
 
-- joining datasets
+```
 
-Then briefly summarize:
+For one exploration of our data we pivoted the data frame to focus on how scores change
 
-- What changes did you make to the original data?
+```{r}
+# individual tree scores pivoted
+scores = my_trees_vars |>
+  select(colnames(my_trees_vars)[grep("score", x = colnames(my_trees_vars))]) |>
+  pivot_longer(
+    everything(),
+    names_to = "Type",
+    values_to = "Score"
+    )
+```
 
-- Which variables will you use in your analysis?
+And for another made a single vector of zipcodes to see how frequently they occurred. The original had some rows with multiple zip codes. Now each index is a single zip code.
 
-- Is there anything else you think may need to be addressed before beginning your exploratory data analysis?
+```{r}
+my_trees_vars |>
+  separate_rows(zipcodes, sep = ",") |>
+  count(zipcodes, name = "frequency") |>
+  mutate(proportion = frequency / sum(frequency))
+
+```
+
+Our data was already very well-organized and ready for the kind of analysis we want to do so there was minimal wrangling required. We had no NA values, etc.
+
+#### **Summary**
+
+**What changes did you make to the original data?**
+
+Primarily we removed data we were not interested in, separated out the zip codes, and made a new data frame to further investigate the variation in the individual categories of tree priority scores.
+
+**Which variables will you use in your analysis?**
+
+Presently we are using zip codes, service area, and the four numeric scores: environment_score, health_score, investment_score and social score.
+
+**Is there anything else you think may need to be addressed before beginning your exploratory data analysis?**
+
+We would like to pursue using the "the_geometry" column which contains GeoJSON formatted data using the Simple Features package. That requires some further investigation into how the package works, and may require some tidying of that column. If we do use it, it may replace zip codes for location information.
 
 ## **Notes**
 
