@@ -9,8 +9,11 @@ knitr::opts_chunk$set(echo = FALSE, escape = FALSE)
 ```
 
 ```{r}
-install.packages("tidyverse")
 library(tidyverse)
+# install tidyverse if not installed
+if ( !("tidyverse" %in% installed.packages()) ){
+    install.packages("tidyverse")
+    }
 ```
 
 ## **Dataset:**
@@ -229,14 +232,53 @@ We will treat `health_score` as a continuous numeric variable
 
 ------------------------------------------------------------------------
 
-## Faceted Comparison Plots
+#### Aggregate Visualizations and Summaries
+
+**Preparing our Scores**
 
 ```{r}
-# I just think it would be useful to see them faceted or overlayed here
-# distributions and summaries of the 4 scores in one place
+# scores pivoted
+scores = my_trees_vars |>
+  select(colnames(my_trees_vars)[grep("score", x = colnames(my_trees_vars))]) |>
+  pivot_longer(
+    everything(),
+    names_to = "Type",
+    values_to = "Score"
+    )
 ```
 
-**Wrangling:** Based on what you discovered about your variables, prepare your dataset for analysis by performing any data wrangling that is appropriate for your project. This might include:
+**Summary Statistics**
+
+```{r}
+# summary statistics of score, note extreme difference in variance
+scores |>
+    group_by(Type) |>
+    summarize(
+        mean = mean(Score),
+        median = median(Score),
+        sd = sd(Score),
+        minimum = min(Score),
+        maximum = max(Score),
+        )
+```
+
+**Plot**
+
+```{r}
+# faceted histogram of scores
+ggplot(data = scores, aes(x = Score, fill = Type)) +
+    geom_histogram(binwidth = 10) +
+    facet_wrap(~Type) +
+    theme(legend.position = "none")
+```
+
+**Interpretation**
+
+Social score has a very high variance. With such a high variance, social score would explain much of the variance in the overall priority score. Investment score mostly takes on values near 100 and has the least variance.
+
+## **Wrangling:**
+
+Based on what you discovered about your variables, prepare your dataset for analysis by performing any data wrangling that is appropriate for your project. This might include:
 
 - selecting or renaming the variables you need
 
@@ -258,7 +300,7 @@ Then briefly summarize:
 
 - Is there anything else you think may need to be addressed before beginning your exploratory data analysis?
 
-## Our Notes
+## **Notes**
 
 <https://www.treeequityscore.org/analyzer/austin/map> - The new tree equity system, interactive. Can be used to show how the two systems score the same areas. Interesting!
 
